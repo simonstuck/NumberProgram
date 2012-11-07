@@ -3,20 +3,15 @@ module NumberPrograms where
 
 import System.Environment
 
-data NumberCode = Code Int Int
-data InstrCode = Null | EvenPair Int Int | OddPair Int NumberCode
-
-instance Show NumberCode where
-  show (Code i j)
-    = "L" ++ show i ++ ", L" ++ show j
+data InstrCode = Null | EvenFunc Int Int | OddFunc Int Int Int
 
 instance Show InstrCode where
   show Null 
     = "Halt"
-  show (EvenPair i j)
+  show (EvenFunc i j)
     = "R" ++ show (i `div` 2) ++ "[+] -> L" ++ show j
-  show (OddPair i c)
-    = "R" ++ show (i `div` 2) ++ "[-] -> " ++ show c
+  show (OddFunc i a b)
+    = "R" ++ show (i `div` 2) ++ "[-] -> " ++ "L" ++ show a ++ ", L" ++ show b
 
 
 main :: IO()
@@ -24,25 +19,25 @@ main :: IO()
 -- Only argument represents the number to translate into a program
 main = do
   args <- getArgs
-  (putStr . transProgram . read . head) args
-  
+  (putStr . concat . lineBreaks . transProgram . read . head) args
+  where
+    lineBreaks = flip  (zipWith (++)) (repeat "\n")
 
 
-transProgram :: Int -> String
--- Prints the result of the program for the given number
-transProgram number
-  = concat $ zipWith (++) instrLines (map func (instrListFromBinary (toBin number)))
+transProgram :: Int -> [String]
+-- Translates the program into a list of readable instructions
+transProgram
+  = (zipWith (++) instrLines) . (map func . instrListFromBinary . toBin)
     where
-      func            = addLineBreak . show . toInstrCode
-      addLineBreak s  = s ++ "\n"
+      func            = show . toInstrCode
       instrLines      = ["L" ++ show i ++ " : " | i <- [0..]]
 
 toInstrCode :: Int -> InstrCode
 -- Translates a given instruction number to an instruction
 toInstrCode 0 = Null
 toInstrCode n
-  | even x = EvenPair (x `div` 2) y
-  | otherwise = OddPair x (Code i j)
+  | even x = EvenFunc (x `div` 2) y
+  | otherwise = OddFunc x i j
     where
       (x, y) = splitNumberInfo 1 (toBin n)
       (i, j) = splitNumberInfo 0 (toBin x)
@@ -56,8 +51,7 @@ splitNumberInfo delim
       splitNumberInfo' x [] = (x,0)
       splitNumberInfo' x (b:bs)
         | b /= delim = splitNumberInfo' (x+1) bs
-        | otherwise  = (x, toDecimal (reverse bs))
-      toDecimal = foldl (\n c -> 2*n + c) 0
+        | otherwise  = (x, foldr (\n c -> 2*n + c) 0 bs)
 
 
 instrListFromBinary :: [Int] -> [Int]
