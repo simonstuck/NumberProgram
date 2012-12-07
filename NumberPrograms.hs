@@ -40,7 +40,7 @@ toInstrCode n
   | otherwise = OddFunc x i j
     where
       (x, y) = splitNumberInfo 1 (toBin n)
-      (i, j) = splitNumberInfo 0 (toBin x)
+      (i, j) = splitNumberInfo 0 (toBin y)
 
 
 splitNumberInfo :: Int -> [Int] -> (Int, Int)
@@ -51,7 +51,7 @@ splitNumberInfo delim
       splitNumberInfo' x [] = (x,0)
       splitNumberInfo' x (b:bs)
         | b /= delim = splitNumberInfo' (x+1) bs
-        | otherwise  = (x, foldr (\n c -> 2*n + c) 0 bs)
+        | otherwise  = (x, foldr (\c n -> 2*n + c) 0 bs)
 
 
 instrListFromBinary :: [Int] -> [Int]
